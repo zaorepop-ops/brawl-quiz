@@ -159,6 +159,7 @@ function renderQuestion() {
   state.locked = false;
   state.timeLeft = ROUND_TIME;
 
+  els.stage.classList.remove("finished");
   els.avatar.style.background = `linear-gradient(145deg, ${state.current.color}, #10121a 76%)`;
   els.avatar.classList.remove("image-missing");
   els.brawlerImage.alt = state.current.name;
@@ -239,6 +240,7 @@ function restart() {
 
 function finishQuiz() {
   clearInterval(state.timer);
+  els.stage.classList.add("finished");
   els.next.hidden = true;
   els.next.disabled = true;
   els.answers.innerHTML = "";
