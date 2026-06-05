@@ -144,6 +144,10 @@ h1 {
   opacity: 0.5;
 }
 
+.brawler-stage.finished::before {
+  background: repeating-linear-gradient(135deg, rgba(255,255,255,0.06) 0 10px, transparent 10px 26px);
+}
+
 .avatar-wrap {
   position: relative;
   z-index: 1;
