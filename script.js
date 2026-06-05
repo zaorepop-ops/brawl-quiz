@@ -28,6 +28,7 @@ const els = {
   correct: document.querySelector("#correctCount"),
   wrong: document.querySelector("#wrongCount"),
   answered: document.querySelector("#answeredCount"),
+  stage: document.querySelector(".brawler-stage"),
   timer: document.querySelector(".timer"),
   avatarWrap: document.querySelector(".avatar-wrap"),
   avatar: document.querySelector("#avatar"),
