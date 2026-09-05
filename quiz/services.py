@@ -33,6 +33,12 @@ def name_override_keys(name: str) -> list[str]:
 
 
 def resolve_display_name(api_name: str, fallback: str) -> str:
+    """Return the display name for a brawler.
+
+    Prefers English (`fallback`, typically the titled English name). Optional
+    NAME_OVERRIDES are applied only when present; the default config leaves
+    that map empty so players see English names.
+    """
     for key in name_override_keys(api_name):
         if key in NAME_OVERRIDES:
             return NAME_OVERRIDES[key]
@@ -63,7 +69,6 @@ def image_urls_for(api_brawler: dict, english_name: str) -> list[str]:
 
 def from_api_brawler(api_brawler: dict) -> dict:
     en = title_case(api_brawler["name"])
-    key = normalize_name(api_brawler["name"])
     return {
         "name": resolve_display_name(api_brawler["name"], en),
         "en": en,
@@ -82,7 +87,7 @@ def build_roster(api_brawlers: list[dict]) -> list[dict]:
     roster = [b for b in roster if normalize_name(b["en"]) not in excluded]
 
     for brawler in roster:
-        brawler["name"] = resolve_display_name(brawler["en"], brawler["name"])
+        brawler["name"] = resolve_display_name(brawler["en"], brawler["en"])
 
     existing = {normalize_name(b["en"]) for b in roster}
     for item in EXTRA_BRAWLERS:
