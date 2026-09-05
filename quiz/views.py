@@ -80,10 +80,10 @@ def api_start(request):
     try:
         roster = get_roster()
     except Exception:
-        return _error("キャラクター情報を読み込めませんでした。", status=502)
+        return _error("Could not load character data.", status=502)
 
     if len(roster) < 4:
-        return _error("出題できるキャラクターが足りません。")
+        return _error("Not enough characters to build a quiz.")
 
     state = _empty_state()
     state["total"] = len(roster)
@@ -92,7 +92,7 @@ def api_start(request):
     try:
         current, deck, question = make_question(roster, state["deck"])
     except ValueError:
-        return _error("出題できるキャラクターが足りません。")
+        return _error("Not enough characters to build a quiz.")
 
     state["deck"] = deck
     state["current_en"] = current["en"]
@@ -107,7 +107,7 @@ def api_start(request):
             "stats": _stats(state),
             "finished": False,
             "round_seconds": getattr(settings, "QUIZ_ROUND_SECONDS", 24),
-            "message": f"{len(roster)}体から出題中。4択から選んでください。",
+            "message": f"Quiz with {len(roster)} brawlers. Pick one of the four options.",
         }
     )
 
@@ -117,16 +117,16 @@ def api_answer(request):
     """Submit an answer or timeout for the current question."""
     state = _get_state(request)
     if not state.get("current_en"):
-        return _error("クイズが開始されていません。先にスタートしてください。")
+        return _error("Quiz has not started. Please start first.")
     if state.get("finished"):
-        return _error("クイズは終了しています。リスタートしてください。")
+        return _error("Quiz is finished. Please restart.")
     if state.get("locked"):
-        return _error("この問題はすでに回答済みです。")
+        return _error("This question has already been answered.")
 
     try:
         roster = get_roster()
     except Exception:
-        return _error("キャラクター情報を読み込めませんでした。", status=502)
+        return _error("Could not load character data.", status=502)
 
     payload = _parse_json(request)
     choice_en = payload.get("choice_en")
@@ -137,7 +137,7 @@ def api_answer(request):
         None,
     )
     if current is None:
-        return _error("現在の問題データが見つかりません。リスタートしてください。")
+        return _error("Current question data not found. Please restart.")
 
     if timed_out or choice_en is None:
         is_correct = None
@@ -149,18 +149,18 @@ def api_answer(request):
 
     if is_correct is True:
         state["correct"] = int(state.get("correct", 0)) + 1
-        message = f"正解！ {current['name']} でした。"
+        message = f"Correct! It was {current['name']}."
     elif is_correct is None:
         state["wrong"] = int(state.get("wrong", 0)) + 1
-        message = f"時間切れ！ 正解は {current['name']} でした。"
+        message = f"Time's up! The answer was {current['name']}."
     else:
         state["wrong"] = int(state.get("wrong", 0)) + 1
-        message = f"おしい！ 正解は {current['name']} でした。"
+        message = f"Close! The answer was {current['name']}."
 
     finished = state["answered"] >= state.get("total", 0)
     state["finished"] = finished
     if finished:
-        message = "クイズ終了"
+        message = "Quiz finished"
 
     _save_state(request, state)
 
@@ -173,8 +173,8 @@ def api_answer(request):
             "finished": finished,
             "message": message
             if not finished
-            else f"お疲れ様！ 正解 {state['correct']} / 不正解 {state['wrong']}",
-            "finish_result": f"正解 {state['correct']} / 不正解 {state['wrong']}"
+            else f"Nice work! Correct {state['correct']} / Wrong {state['wrong']}",
+            "finish_result": f"Correct {state['correct']} / Wrong {state['wrong']}"
             if finished
             else None,
         }
@@ -191,22 +191,22 @@ def api_next(request):
                 "ok": True,
                 "finished": True,
                 "stats": _stats(state),
-                "message": "クイズ終了",
-                "finish_result": f"正解 {state.get('correct', 0)} / 不正解 {state.get('wrong', 0)}",
+                "message": "Quiz finished",
+                "finish_result": f"Correct {state.get('correct', 0)} / Wrong {state.get('wrong', 0)}",
             }
         )
     if not state.get("locked"):
-        return _error("先に回答してください。")
+        return _error("Please answer first.")
 
     try:
         roster = get_roster()
     except Exception:
-        return _error("キャラクター情報を読み込めませんでした。", status=502)
+        return _error("Could not load character data.", status=502)
 
     try:
         current, deck, question = make_question(roster, state.get("deck") or [])
     except ValueError:
-        return _error("出題できるキャラクターが足りません。")
+        return _error("Not enough characters to build a quiz.")
 
     state["deck"] = deck
     state["current_en"] = current["en"]
@@ -220,7 +220,7 @@ def api_next(request):
             "stats": _stats(state),
             "finished": False,
             "round_seconds": getattr(settings, "QUIZ_ROUND_SECONDS", 24),
-            "message": f"{len(roster)}体から出題中。4択から選んでください。",
+            "message": f"Quiz with {len(roster)} brawlers. Pick one of the four options.",
         }
     )
 

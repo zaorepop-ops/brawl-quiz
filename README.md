@@ -1,21 +1,21 @@
-# ブロスタ キャラクター当てクイズ（Django）
+# Brawl Stars Character Quiz (Django)
 
-Brawl Stars のキャラクター画像を見て、日本語名の4択から当てるクイズです。
-サーバー側でロースター取得・出題・採点を管理します。
+Guess the Brawl Stars brawler from the image — four English-name multiple choice options.
+The server manages roster fetch, question selection, and scoring.
 
-> **注意:** GitHub Pages では Django をホストできません。
-> 現状はローカル（または任意の WSGI/ASGI サーバー）で動かしてください。
-> 旧静的版は [`legacy_static/`](./legacy_static/) に残してあります。
+> **Note:** GitHub Pages cannot host Django.
+> Run locally (or on any WSGI/ASGI server) for now.
+> The old static site lives in [`legacy_static/`](./legacy_static/).
 
-## 必要環境
+## Requirements
 
-- Python 3.10+（3.12 / 3.13 推奨）
-- インターネット接続（起動時・キャッシュ更新時に [BrawlAPI](https://api.brawlapi.com/v1/brawlers) へアクセス）
+- Python 3.10+ (3.12 / 3.13 recommended)
+- Internet access (loads [BrawlAPI](https://api.brawlapi.com/v1/brawlers) on startup / cache refresh)
 
-## セットアップ（ローカル）
+## Setup (local)
 
 ```bash
-cd /path/to/.github.io   # このリポジトリ
+cd /path/to/brawl-quiz
 python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
@@ -23,19 +23,19 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-ブラウザで http://127.0.0.1:8000/ を開いてください。
+Open http://127.0.0.1:8000/ in your browser.
 
-## アーキテクチャ概要
+## Architecture
 
-- `config/` … Django プロジェクト設定
-- `quiz/` … クイズアプリ
-  - `characters_config.py` … 日本語名オーバーライド / 除外 / 追加キャラ（旧 `characters.js`）
-  - `services.py` … BrawlAPI 取得・メモリキャッシュ・出題ロジック
-  - セッションに正解・スコア・出題デッキを保持
-  - JSON API: `/api/start/`, `/api/answer/`, `/api/next/`, `/api/status/`
-  - フロントは `quiz/static/quiz/quiz.js` が API を呼び、UI は従来どおり日本語
+- `config/` — Django project settings
+- `quiz/` — quiz app
+  - `characters_config.py` — exclusions / extras / image slug overrides (display names are English)
+  - `services.py` — BrawlAPI fetch, in-memory cache, question logic
+  - Session stores the answer, score, and question deck
+  - JSON APIs: `/api/start/`, `/api/answer/`, `/api/next/`, `/api/status/`
+  - Front end: `quiz/static/quiz/quiz.js` calls the APIs; UI copy is English
 
-## 旧静的サイト
+## Legacy static site
 
-`legacy_static/` に以前の `index.html` / `script.js` / `characters.js` / `styles.css` を退避しています。
-GitHub Pages 向けの静的デプロイが必要な場合はそちらを参照してください。
+`legacy_static/` keeps the previous `index.html` / `script.js` / `characters.js` / `styles.css`.
+Use that if you need a GitHub Pages–style static deploy.

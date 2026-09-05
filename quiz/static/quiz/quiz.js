@@ -1,4 +1,4 @@
-const MASKED_NAME = "？？？？？";
+const MASKED_NAME = "?????";
 
 const roundSecondsEl = document.getElementById("quiz-round-seconds");
 const ROUND_TIME = roundSecondsEl ? Number(JSON.parse(roundSecondsEl.textContent)) : 24;
@@ -55,7 +55,7 @@ async function api(path, options = {}) {
   }
 
   if (!response.ok || (data && data.ok === false)) {
-    const message = (data && data.message) || "リクエストに失敗しました。";
+    const message = (data && data.message) || "Request failed.";
     throw new Error(message);
   }
   return data;
@@ -112,7 +112,7 @@ function renderQuestion(payload) {
   els.avatarWrap.hidden = false;
   els.maskedName.hidden = false;
   els.finishPanel.hidden = true;
-  els.message.textContent = payload.message || "4択から選んでください。";
+  els.message.textContent = payload.message || "Pick one of the four options.";
   els.next.hidden = false;
   els.next.disabled = true;
   els.answers.innerHTML = "";
@@ -148,7 +148,7 @@ function showFinish(payload) {
   els.maskedName.textContent = "";
   els.finishResult.textContent = payload.finish_result || payload.message || "";
   els.finishPanel.hidden = false;
-  els.message.textContent = "クイズ終了";
+  els.message.textContent = "Quiz finished";
   updateStats(payload.stats);
 }
 
@@ -186,14 +186,14 @@ async function submitAnswer({ choice_en = null, timeout = false, button = null }
     }
   } catch (err) {
     state.locked = false;
-    els.message.textContent = err.message || "回答の送信に失敗しました。";
+    els.message.textContent = err.message || "Failed to submit answer.";
     els.next.disabled = false;
   }
 }
 
 async function startQuiz() {
   clearTimer();
-  els.message.textContent = "読み込み中…";
+  els.message.textContent = "Loading…";
   els.next.disabled = true;
   try {
     const data = await api("/api/start/", { method: "POST", body: "{}" });
@@ -203,7 +203,7 @@ async function startQuiz() {
     }
     renderQuestion(data);
   } catch (err) {
-    els.message.textContent = err.message || "キャラクター情報を読み込めませんでした。";
+    els.message.textContent = err.message || "Could not load character data.";
     els.next.disabled = true;
   }
 }
@@ -219,7 +219,7 @@ async function nextQuestion() {
     }
     renderQuestion(data);
   } catch (err) {
-    els.message.textContent = err.message || "次の問題を取得できませんでした。";
+    els.message.textContent = err.message || "Could not load the next question.";
     els.next.disabled = false;
   }
 }
