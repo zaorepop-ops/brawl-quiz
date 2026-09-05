@@ -1,17 +1,20 @@
-"""Brawler roster config — exclusions, extras, and image slug overrides.
+"""同期用の静的設定（名簿そのものは DB の Character）。
 
-Display names use English (`en`). NAME_OVERRIDES is intentionally empty so
-answer choices and reveals show English brawler names. Keep IMAGE_SLUG_OVERRIDES,
-EXCLUDED_ENGLISH_NAMES, and EXTRA_BRAWLERS for data correctness.
+- EXCLUDED_ENGLISH_NAMES: sync で新規作成しない / 既存は無効化
+- EXTRA_BRAWLERS: API に無いキャラを source=extra で投入
+- IMAGE_SLUG_OVERRIDES: noff.gg 全身 URL のスラッグ例外
+- NAME_OVERRIDES: 表示名上書き（空なら英語のまま）
 """
 
+# sync_characters がスキップ / 無効化する英語名
 EXCLUDED_ENGLISH_NAMES = [
     "Buzz-Lightyear",
 ]
 
-# Intentionally empty: UI displays English names instead of localized overrides.
+# 意図的に空: UI は英語名を表示する
 NAME_OVERRIDES = {}
 
+# API にまだ無い（または別管理したい）ブロスタ。sync で source=extra。
 EXTRA_BRAWLERS = [
     {
         "name": "Sirius",
@@ -47,6 +50,7 @@ EXTRA_BRAWLERS = [
     },
 ]
 
+# ハイフン名などを noff のファイル名（アンダースコア等）に合わせる
 IMAGE_SLUG_OVERRIDES = {
     "8-BIT": "8_bit",
     "EL-PRIMO": "el_primo",

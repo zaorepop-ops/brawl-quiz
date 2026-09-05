@@ -1,4 +1,7 @@
-"""Session-backed quiz views and JSON APIs."""
+"""Session-backed quiz views and JSON APIs.
+
+名簿は DB（Character）由来。4 体未満なら英語の手順付きエラーを返す。
+"""
 from __future__ import annotations
 
 import json
@@ -9,9 +12,16 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 
-from .services import get_roster, make_question, normalize_name
+from .services import RosterNotReady, make_question, normalize_name, require_roster
 
 SESSION_KEY = "brawl_quiz"
+
+# 名簿不足時にフロントへ返す共通メッセージ（手順を含める）
+ROSTER_SETUP_HINT = (
+    "Not enough quiz-ready characters (need is_active=True and image_kind=full_body). "
+    "Run: python manage.py sync_characters && python manage.py verify_character_images "
+    "— then review/activate in Django Admin (/admin/)."
+)
 
 
 def _empty_state() -> dict:
@@ -62,6 +72,14 @@ def _error(message: str, status: int = 400) -> JsonResponse:
     return JsonResponse({"ok": False, "message": message}, status=status)
 
 
+def _load_roster_or_error():
+    """名簿取得。不足時は (None, JsonResponse)。"""
+    try:
+        return require_roster(), None
+    except RosterNotReady as exc:
+        return None, _error(str(exc) or ROSTER_SETUP_HINT, status=503)
+
+
 @ensure_csrf_cookie
 @require_GET
 def index(request):
@@ -77,13 +95,9 @@ def index(request):
 @require_POST
 def api_start(request):
     """Start or restart a quiz session and return the first question."""
-    try:
-        roster = get_roster()
-    except Exception:
-        return _error("Could not load character data.", status=502)
-
-    if len(roster) < 4:
-        return _error("Not enough characters to build a quiz.")
+    roster, err = _load_roster_or_error()
+    if err:
+        return err
 
     state = _empty_state()
     state["total"] = len(roster)
@@ -91,8 +105,10 @@ def api_start(request):
 
     try:
         current, deck, question = make_question(roster, state["deck"])
+    except RosterNotReady as exc:
+        return _error(str(exc), status=503)
     except ValueError:
-        return _error("Not enough characters to build a quiz.")
+        return _error(ROSTER_SETUP_HINT, status=503)
 
     state["deck"] = deck
     state["current_en"] = current["en"]
@@ -123,10 +139,9 @@ def api_answer(request):
     if state.get("locked"):
         return _error("This question has already been answered.")
 
-    try:
-        roster = get_roster()
-    except Exception:
-        return _error("Could not load character data.", status=502)
+    roster, err = _load_roster_or_error()
+    if err:
+        return err
 
     payload = _parse_json(request)
     choice_en = payload.get("choice_en")
@@ -198,15 +213,16 @@ def api_next(request):
     if not state.get("locked"):
         return _error("Please answer first.")
 
-    try:
-        roster = get_roster()
-    except Exception:
-        return _error("Could not load character data.", status=502)
+    roster, err = _load_roster_or_error()
+    if err:
+        return err
 
     try:
         current, deck, question = make_question(roster, state.get("deck") or [])
+    except RosterNotReady as exc:
+        return _error(str(exc), status=503)
     except ValueError:
-        return _error("Not enough characters to build a quiz.")
+        return _error(ROSTER_SETUP_HINT, status=503)
 
     state["deck"] = deck
     state["current_en"] = current["en"]

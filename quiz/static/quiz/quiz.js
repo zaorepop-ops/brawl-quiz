@@ -8,7 +8,8 @@ const state = {
   timer: null,
   timeLeft: ROUND_TIME,
   current: null,
-  imageUrls: []
+  // DB 確定の単一 URL（旧 image_urls フォールバックは廃止）
+  imageUrl: null
 };
 
 const els = {
@@ -68,10 +69,8 @@ function updateStats(stats) {
   els.answered.textContent = stats.answered ?? 0;
 }
 
-function showBrawlerImage(index = 0) {
-  const urls = state.imageUrls || [];
-  const url = urls[index];
-  els.brawlerImage.dataset.imageIndex = String(index);
+function showBrawlerImage() {
+  const url = state.imageUrl;
   els.avatar.classList.toggle("image-missing", !url);
   els.brawlerImage.src = url || "";
 }
@@ -100,7 +99,7 @@ function renderQuestion(payload) {
   const question = payload.question;
   state.locked = false;
   state.current = null;
-  state.imageUrls = question.image_urls || [];
+  state.imageUrl = question.image_url || null;
 
   els.stage.classList.remove("finished");
   els.avatar.style.background = `linear-gradient(145deg, ${question.color || "#4cc9f0"}, #10121a 76%)`;
@@ -226,13 +225,9 @@ async function nextQuestion() {
 
 els.next.addEventListener("click", nextQuestion);
 els.restart.addEventListener("click", startQuiz);
+// 単一 URL のためフォールバックなし。壊れていればプレースホルダ表示。
 els.brawlerImage.addEventListener("error", () => {
-  const nextIndex = Number(els.brawlerImage.dataset.imageIndex || "0") + 1;
-  if (nextIndex < (state.imageUrls || []).length) {
-    showBrawlerImage(nextIndex);
-  } else {
-    els.avatar.classList.add("image-missing");
-  }
+  els.avatar.classList.add("image-missing");
 });
 
 startQuiz();
