@@ -1,24 +1,27 @@
-"""BrawlAPI roster loading, caching, and quiz question helpers."""
+"""クイズ名簿の読み出しと問題生成。
+
+名簿のソース・オブ・トゥルースは DB の Character。
+BrawlAPI の直接フェッチは sync_characters 管理コマンド側に移した。
+"""
 from __future__ import annotations
 
 import random
 import re
-import threading
-import time
-from typing import Any
 
-import requests
-from django.conf import settings
+from .models import Character
 
-from .characters_config import (
-    EXCLUDED_ENGLISH_NAMES,
-    EXTRA_BRAWLERS,
-    IMAGE_SLUG_OVERRIDES,
-    NAME_OVERRIDES,
-)
 
-_cache_lock = threading.Lock()
-_roster_cache: dict[str, Any] = {"brawlers": None, "fetched_at": 0.0}
+class RosterNotReady(Exception):
+    """有効な全身キャラが 4 体未満のとき。API は英語メッセージを返す。"""
+
+    def __init__(self, count: int):
+        self.count = count
+        super().__init__(
+            "Not enough quiz-ready characters "
+            f"(need at least 4 with is_active=True and image_kind=full_body; found {count}). "
+            "Run `python manage.py sync_characters`, then "
+            "`python manage.py verify_character_images` and/or activate characters in Django Admin."
+        )
 
 
 def normalize_name(name: str) -> str:
@@ -26,23 +29,10 @@ def normalize_name(name: str) -> str:
 
 
 def name_override_keys(name: str) -> list[str]:
-    """Match overrides whether API uses spaces or hyphens."""
+    """スペース / ハイフンの揺れを吸収して NAME_OVERRIDES を引く。"""
     n = normalize_name(name)
     variants = {n, n.replace(" ", "-"), n.replace("-", " ")}
     return list(variants)
-
-
-def resolve_display_name(api_name: str, fallback: str) -> str:
-    """Return the display name for a brawler.
-
-    Prefers English (`fallback`, typically the titled English name). Optional
-    NAME_OVERRIDES are applied only when present; the default config leaves
-    that map empty so players see English names.
-    """
-    for key in name_override_keys(api_name):
-        if key in NAME_OVERRIDES:
-            return NAME_OVERRIDES[key]
-    return fallback
 
 
 def title_case(name: str) -> str:
@@ -50,6 +40,9 @@ def title_case(name: str) -> str:
 
 
 def image_slug(name: str) -> str:
+    """noff.gg 全身画像パス用スラッグ（旧 runtime と同じ規則）。"""
+    from .characters_config import IMAGE_SLUG_OVERRIDES
+
     override = IMAGE_SLUG_OVERRIDES.get(normalize_name(name))
     if override:
         return override
@@ -58,78 +51,50 @@ def image_slug(name: str) -> str:
     return slug
 
 
-def image_urls_for(api_brawler: dict, english_name: str) -> list[str]:
-    urls = [
-        f"https://www.noff.gg/brawl-stars/res/img/brawlers/{image_slug(english_name)}.webp",
-        api_brawler.get("imageUrl"),
-        api_brawler.get("imageUrl2"),
-    ]
-    return [u for u in urls if u]
+def noff_full_body_url(english_name: str) -> str:
+    """仮の全身候補 URL。存在確認は verify_character_images に任せる。"""
+    return (
+        "https://www.noff.gg/brawl-stars/res/img/brawlers/"
+        f"{image_slug(english_name)}.webp"
+    )
 
 
-def from_api_brawler(api_brawler: dict) -> dict:
-    en = title_case(api_brawler["name"])
+def is_noff_full_body_url(url: str) -> bool:
+    """noff の brawlers/ パスなら全身候補として扱う。"""
+    if not url:
+        return False
+    return "noff.gg/brawl-stars/res/img/brawlers/" in url
+
+
+def character_to_roster_item(ch: Character) -> dict:
+    """問題生成が期待する辞書形。image_url は単一（フォールバックなし）。"""
     return {
-        "name": resolve_display_name(api_brawler["name"], en),
-        "en": en,
-        "color": (api_brawler.get("rarity") or {}).get("color") or "#4cc9f0",
-        "image_urls": image_urls_for(api_brawler, en),
+        "name": ch.display_name,
+        "en": ch.name_en,
+        "color": ch.color or "#4cc9f0",
+        "image_url": ch.image_url,
     }
 
 
-def build_roster(api_brawlers: list[dict]) -> list[dict]:
-    excluded = {normalize_name(n) for n in EXCLUDED_ENGLISH_NAMES}
-    roster = [
-        from_api_brawler(item)
-        for item in api_brawlers
-        if item.get("imageUrl")
-    ]
-    roster = [b for b in roster if normalize_name(b["en"]) not in excluded]
-
-    for brawler in roster:
-        brawler["name"] = resolve_display_name(brawler["en"], brawler["en"])
-
-    existing = {normalize_name(b["en"]) for b in roster}
-    for item in EXTRA_BRAWLERS:
-        key = normalize_name(item["en"])
-        if key not in existing and key not in excluded:
-            roster.append(
-                {
-                    "name": item["name"],
-                    "en": item["en"],
-                    "color": item["color"],
-                    "image_urls": list(item["image_urls"]),
-                }
-            )
-            existing.add(key)
-    return roster
-
-
-def fetch_api_list() -> list[dict]:
-    response = requests.get(settings.BRAWLAPI_URL, timeout=20)
-    response.raise_for_status()
-    data = response.json()
-    return data.get("list") or []
-
-
 def get_roster(*, force_refresh: bool = False) -> list[dict]:
-    """Return cached roster; refresh from BrawlAPI when stale."""
-    ttl = getattr(settings, "BRAWLER_CACHE_SECONDS", 1800)
-    now = time.time()
+    """クイズ名簿: is_active + full_body のみ。
 
-    with _cache_lock:
-        cached = _roster_cache["brawlers"]
-        age = now - float(_roster_cache["fetched_at"] or 0)
-        if cached is not None and not force_refresh and age < ttl:
-            return [dict(b) for b in cached]
+    force_refresh は旧 API キャッシュ互換の引数で、DB 読みでは無視する。
+    """
+    del force_refresh  # API キャッシュ時代のシグネチャ互換
+    qs = Character.objects.filter(
+        is_active=True,
+        image_kind=Character.ImageKind.FULL_BODY,
+    ).exclude(image_url="")
+    return [character_to_roster_item(ch) for ch in qs]
 
-    api_list = fetch_api_list()
-    roster = build_roster(api_list)
 
-    with _cache_lock:
-        _roster_cache["brawlers"] = roster
-        _roster_cache["fetched_at"] = time.time()
-        return [dict(b) for b in roster]
+def require_roster() -> list[dict]:
+    """4 体未満なら RosterNotReady。views から呼ぶ。"""
+    roster = get_roster()
+    if len(roster) < 4:
+        raise RosterNotReady(len(roster))
+    return roster
 
 
 def find_brawler(roster: list[dict], en: str) -> dict | None:
@@ -148,11 +113,12 @@ def shuffle_copy(items: list) -> list:
 
 def make_question(roster: list[dict], deck: list[str]) -> tuple[dict, list[str], dict]:
     """
-    Pop next answer from deck and build 4 choices.
-    Returns (current_brawler, remaining_deck, public_question_payload).
+    デッキから次の正解を取り、4 択を組み立てる。
+    戻り値: (current_brawler, remaining_deck, public_question_payload)
+    payload の画像は image_url 単一（旧 image_urls 配列は廃止）。
     """
     if len(roster) < 4:
-        raise ValueError("not_enough_brawlers")
+        raise RosterNotReady(len(roster))
 
     working_deck = list(deck)
     if not working_deck:
@@ -161,19 +127,22 @@ def make_question(roster: list[dict], deck: list[str]) -> tuple[dict, list[str],
     current_en = working_deck.pop()
     current = find_brawler(roster, current_en)
     if current is None:
-        # Stale deck entry — retry once with fresh deck
+        # デッキが古い名簿由来のとき、作り直して一度だけリトライ
         working_deck = [b["en"] for b in shuffle_copy(roster)]
         current_en = working_deck.pop()
         current = find_brawler(roster, current_en)
         if current is None:
             raise ValueError("brawler_missing")
 
-    distractors = shuffle_copy([b for b in roster if normalize_name(b["en"]) != normalize_name(current["en"])])
+    distractors = shuffle_copy(
+        [b for b in roster if normalize_name(b["en"]) != normalize_name(current["en"])]
+    )
     options = shuffle_copy([current, *distractors[:3]])
 
     payload = {
         "options": [{"name": o["name"], "en": o["en"]} for o in options],
-        "image_urls": list(current["image_urls"]),
+        # 単一 URL。フロントもフォールバック連鎖しない。
+        "image_url": current["image_url"],
         "color": current["color"],
     }
     return current, working_deck, payload
