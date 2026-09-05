@@ -1,39 +1,39 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ブロスタ キャラクター当てクイズ</title>
+    <title>Brawl Stars Character Quiz</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'quiz/styles.css' %}">
   </head>
   <body>
     {% csrf_token %}
     <main class="app-shell">
-      <section class="game-panel" aria-label="ブロスタ キャラクター当てクイズ">
+      <section class="game-panel" aria-label="Brawl Stars Character Quiz">
         <header class="topbar">
           <div>
             <p class="eyebrow">Brawler Guess · Django</p>
-            <h1>ブロスタ キャラクター当てクイズ</h1>
+            <h1>Brawl Stars Character Quiz</h1>
           </div>
-          <div class="stats-strip" aria-label="成績">
+          <div class="stats-strip" aria-label="Score">
             <div>
               <span id="correctCount">0</span>
-              <small>正解</small>
+              <small>Correct</small>
             </div>
             <div>
               <span id="wrongCount">0</span>
-              <small>不正解</small>
+              <small>Wrong</small>
             </div>
             <div>
               <span id="answeredCount">0</span>
-              <small>回答済み</small>
+              <small>Answered</small>
             </div>
           </div>
         </header>
 
-        <div class="controls" aria-label="ゲーム設定">
-          <button class="icon-button" id="restart" type="button" aria-label="リスタート" title="リスタート">
+        <div class="controls" aria-label="Game controls">
+          <button class="icon-button" id="restart" type="button" aria-label="Restart" title="Restart">
             <span aria-hidden="true">↻</span>
           </button>
         </div>
@@ -50,16 +50,16 @@
           </div>
           <div class="name-mask" id="maskedName">?????</div>
           <div class="finish-panel" id="finishPanel" hidden>
-            <strong>お疲れ様！</strong>
+            <strong>Nice work!</strong>
             <span id="finishResult"></span>
           </div>
         </article>
 
-        <section class="answers" id="answers" aria-label="回答候補"></section>
+        <section class="answers" id="answers" aria-label="Answer choices"></section>
 
         <footer class="status-row">
-          <p id="message">読み込み中…</p>
-          <button class="next-button" id="next" type="button" disabled>次の問題</button>
+          <p id="message">Loading…</p>
+          <button class="next-button" id="next" type="button" disabled>Next</button>
         </footer>
       </section>
     </main>
