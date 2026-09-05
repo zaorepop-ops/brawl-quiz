@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ブロスタ キャラクター当てクイズ</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="game-panel" aria-label="ブロスタ キャラクター当てクイズ">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Brawler Guess</p>
+            <h1>ブロスタ キャラクター当てクイズ</h1>
+          </div>
+          <div class="stats-strip" aria-label="成績">
+            <div>
+              <span id="correctCount">0</span>
+              <small>正解</small>
+            </div>
+            <div>
+              <span id="wrongCount">0</span>
+              <small>不正解</small>
+            </div>
+            <div>
+              <span id="answeredCount">0</span>
+              <small>回答済み</small>
+            </div>
+          </div>
+        </header>
+
+        <div class="controls" aria-label="ゲーム設定">
+          <button class="icon-button" id="restart" type="button" aria-label="リスタート" title="リスタート">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+
+        <article class="brawler-stage">
+          <div class="timer">
+            <div class="timer-bar" id="timerBar"></div>
+          </div>
+          <div class="avatar-wrap" aria-hidden="true">
+            <div class="avatar" id="avatar">
+              <img id="brawlerImage" alt="">
+              <span id="avatarInitial">?</span>
+            </div>
+          </div>
+          <div class="name-mask" id="maskedName">?????</div>
+          <div class="finish-panel" id="finishPanel" hidden>
+            <strong>お疲れ様！</strong>
+            <span id="finishResult"></span>
+          </div>
+        </article>
+
+        <section class="answers" id="answers" aria-label="回答候補"></section>
+
+        <footer class="status-row">
+          <p id="message">4択から選んでスタート。</p>
+          <button class="next-button" id="next" type="button" disabled>次の問題</button>
+        </footer>
+      </section>
+    </main>
+    <script src="./characters.js"></script>
+    <script src="./script.js"></script>
+  </body>
+</html>
