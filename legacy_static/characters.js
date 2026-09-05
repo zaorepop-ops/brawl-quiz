@@ -1,0 +1,142 @@
+// 編集用: 表示名、除外キャラ、APIにない追加キャラを調整できます。
+
+var BRAWL_QUIZ_CHARACTERS = {
+  excludedEnglishNames: ["Buzz-Lightyear"],
+
+  nameOverrides: {
+    "8-BIT": "8ビット",
+    "ALLI": "アリー",
+    "AMBER": "アンバー",
+    "ANGELO": "アンジェロ",
+    "ASH": "アッシュ",
+    "BARLEY": "バーリー",
+    "BEA": "ビー",
+    "BELLE": "ベル",
+    "BERRY": "ベリー",
+    "BIBI": "ビビ",
+    "BO": "ボウ",
+    "BONNIE": "ボニー",
+    "BROCK": "ブロック",
+    "BULL": "ブル",
+    "BUSTER": "バスター",
+    "BUZZ": "バズ",
+    "BYRON": "バイロン",
+    "CARL": "カール",
+    "CHARLIE": "チャーリー",
+    "CHESTER": "チェスター",
+    "CHUCK": "チャック",
+    "CLANCY": "クランシー",
+    "COLETTE": "コレット",
+    "COLT": "コルト",
+    "CORDELIUS": "コーデリアス",
+    "CROW": "クロウ",
+    "DARRYL": "ダリル",
+    "DOUG": "ダグ",
+    "DRACO": "ドラコ",
+    "DYNAMIKE": "ダイナマイク",
+    "EDGAR": "エドガー",
+    "EL-PRIMO": "エル・プリモ",
+    "EMZ": "Emz",
+    "EVE": "イヴ",
+    "FANG": "ファング",
+    "FINX": "フィンクス",
+    "FRANK": "フランケン",
+    "GALE": "ゲイル",
+    "GENE": "ジーン",
+    "GIGI": "ジジ",
+    "GLOWBERT": "グローウィー",
+    "GRAY": "グレイ",
+    "GRIFF": "グリフ",
+    "GROM": "グロム",
+    "GUS": "ガス",
+    "HANK": "ハンク",
+    "JACKY": "ジャッキー",
+    "JANET": "ジャネット",
+    "JAE-YONG": "ジェヨン",
+    "JESSIE": "ジェシー",
+    "JUJU": "ジュジュ",
+    "KAZE": "カゼ",
+    "KENJI": "ケンジ",
+    "KIT": "キット",
+    "LARRY-LAWRIE": "ラリー&ローリー",
+    "LEON": "レオン",
+    "LILY": "リリー",
+    "LOLA": "ローラ",
+    "LOU": "ルー",
+    "LUMI": "ルミ",
+    "MAISIE": "メイジー",
+    "MANDY": "マンディ",
+    "MAX": "マックス",
+    "MEEPLE": "ミープル",
+    "MEG": "メグ",
+    "MELODIE": "メロディー",
+    "MICO": "ミコ",
+    "MINA": "ミナ",
+    "MOE": "モー",
+    "MORTIS": "モーティス",
+    "MR-P": "ミスターP",
+    "NANI": "ナーニ",
+    "NITA": "ニタ",
+    "OLLIE": "オーリー",
+    "OTIS": "オーティス",
+    "PAM": "パム",
+    "PEARL": "パール",
+    "PENNY": "ペニー",
+    "PIPER": "エリザベス",
+    "PIERCE": "ピアス",
+    "POCO": "ポコ",
+    "RICO": "リコ",
+    "ROSA": "ローサ",
+    "R-T": "R-T",
+    "RUFFS": "ラフス",
+    "SAM": "サム",
+    "SANDY": "サンディ",
+    "SHADE": "シェイド",
+    "SHELLY": "シェリー",
+    "SPIKE": "スパイク",
+    "SPROUT": "スプラウト",
+    "SQUEAK": "スクウィーク",
+    "STU": "ストゥー",
+    "SURGE": "サージ",
+    "TARA": "タラ",
+    "TICK": "ティック",
+    "TRUNK": "トランク",
+    "WILLOW": "ウィロー",
+    "ZIGGY": "ジギー"
+  },
+
+  extraBrawlers: [
+    {
+      name: "シリウス",
+      en: "Sirius",
+      color: "#fff36b",
+      imageUrls: [
+        "https://www.noff.gg/brawl-stars/res/img/brawlers/sirius.webp"
+      ]
+    },
+    {
+      name: "ダミアン",
+      en: "Damian",
+      color: "#fe5e72",
+      imageUrls: [
+        "https://www.noff.gg/brawl-stars/res/img/brawlers/damian.webp"
+      ]
+    },
+    {
+      name: "ナジア",
+      en: "Najia",
+      color: "#fe5e72",
+      imageUrls: [
+        "https://www.noff.gg/brawl-stars/res/img/brawlers/najia.webp"
+      ]
+    },
+    {
+      name: "スターノヴァ",
+      en: "Starr-Nova",
+      color: "#fe5e72",
+      imageUrls: [
+        "https://www.noff.gg/brawl-stars/res/img/brawlers/starr_nova.webp"
+      ]
+    }
+  ]
+};
